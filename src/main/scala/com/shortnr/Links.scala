@@ -14,6 +14,17 @@ object LinkModel extends AppDatabase {
     (Links() returning Links()) += Link(url, generateCode(), folderId, user.id)
   }
 
+  def findByCode(code: String): Option[Link] = {
+    val link = for {
+      l <- Links() if l.code === code
+    } yield l
+
+    link.list match {
+      case List(link) => Some(link)
+      case _          => None
+    }
+  }
+
   def getOrGenerateCode(code: Option[String]): String = {
     code match {
       case Some(code) => code

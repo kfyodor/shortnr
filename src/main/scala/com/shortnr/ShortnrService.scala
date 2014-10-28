@@ -43,7 +43,9 @@ trait ShortnrService extends HttpService {
         pathPrefix("link") {
           path(Segment) { code: String =>
             get {
-              complete(s"link/$code")
+              complete {
+                LinkModel.findByCode(code).toString
+              }
             } ~
             post {
               complete(s"link/$code")
