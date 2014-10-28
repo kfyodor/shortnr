@@ -50,10 +50,14 @@ trait ShortnrService extends HttpService {
             }
           } ~ pathEnd {
             get {
-              complete("link")
+              complete("GET link")
             } ~
             post {
-              complete("link")
+              formFields('url, 'code.?, 'folder_id.as[Long].?) { (url, code, folderId) =>
+                complete {
+                  LinkModel.create(User(1.toLong, "heyheyhey"), url, code, folderId).toString
+                }
+              }
             }
           }
         } ~
