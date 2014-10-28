@@ -38,8 +38,8 @@ trait ShortnrService extends HttpService {
         }
       }
     } ~
-    headerValueByName("Access-Token") { token =>
-      authenticate(validate(token)) { currentUser =>
+    // headerValueByName("Access-Token") { token =>
+    //   authenticate(validate(token)) { currentUser =>
         pathPrefix("link") {
           path(Segment) { code: String =>
             get {
@@ -68,7 +68,7 @@ trait ShortnrService extends HttpService {
             }
           }
         }
-      }
-    }
+    //   }
+    // }
   }
 }
