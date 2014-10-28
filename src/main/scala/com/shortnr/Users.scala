@@ -7,10 +7,23 @@ import java.util.UUID
 case class User(id: Long, token: String)
 
 object UserModel extends AppDatabase {
-  def findOrCreate(id: Long) = {
-    val q = for { user <- Users() if user.id === id } yield user.token
+  def findByToken(token: String): Option[User] = {
+    val result  = for {
+      user <- Users() if user.token === token
+    } yield user
 
-    q.list match {
+    result.list match {
+      case List(user) => Some(user)
+      case _          => None
+    }
+  }
+
+  def findOrCreate(id: Long) = {
+    val result = for { 
+      user <- Users() if user.id === id 
+    } yield user.token
+
+    result.list match {
       case List(token) => token
       case _           => create(id)
     }
