@@ -19,6 +19,11 @@ trait AppDatabase {
   implicit val session: Session = db.createSession()
 
   def startDB() = {
-    Users().ddl.create
+    val ddls = Seq(Users(), Folders(), Links()).map(_.ddl)
+
+    ddls.foreach { ddl =>
+      ddl.drop
+      ddl.create
+    }
   }
 }
