@@ -38,8 +38,8 @@ object UserModel extends AppDatabase {
 
 
 class Users(tag: Tag) extends Table[User](tag, "users") {
-  def id    = column[Long]("UID", O.PrimaryKey)
-  def token = column[String]("TOKEN")
+  def id    = column[Long]("id", O.PrimaryKey)
+  def token = column[String]("token")
 
   def tokenIdx = index("token_idx", token, unique = true)
 

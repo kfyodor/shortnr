@@ -14,6 +14,10 @@ object LinkModel extends AppDatabase {
     (Links() returning Links()) += Link(url, generateCode(), folderId, user.id)
   }
 
+  def list(user: User): List[Link] = {
+    Links().filter(_.userId === user.id).list
+  }
+
   def findByCode(code: String): Option[Link] = {
     val link = for {
       l <- Links() if l.code === code
@@ -47,12 +51,18 @@ object LinkModel extends AppDatabase {
 }
 
 class Links(tag: Tag) extends Table[Link](tag, "links") {
-  def url      = column[String]("URL")
-  def code     = column[String]("CODE")
-  def folderId = column[Option[Long]]("FOLDER_ID")
-  def userId   = column[Long]("USER_ID")
+  def url      = column[String]("url")
+  def code     = column[String]("code")
+  def folderId = column[Option[Long]]("folder_id")
+  def userId   = column[Long]("user_id")
+
+  def user = foreignKey("user_fk", userId, Users())(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+  def folder = foreignKey("folder_fk", folderId, Folders())(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+  def userIdx = index("user_idx", userId)
+  def folderIdx = index("folder_idx", folderId)
   
-  def codeInx = index("code_idx", code, unique = true)
+  def codeIdx = index("code_idx", code, unique = true)
 
   def * = (url, code, folderId, userId) <> (Link.tupled, Link.unapply _)
 }

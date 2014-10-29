@@ -57,7 +57,9 @@ trait ShortnrService extends HttpService {
             }
           } ~ pathEnd {
             get {
-              complete("GET link")
+              complete {
+                LinkModel.list(currentUser).toString
+              }
             } ~
             post {
               formFields('url, 'code.?, 'folder_id.as[Long].?) { (url, code, folderId) =>
