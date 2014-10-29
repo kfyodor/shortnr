@@ -8,22 +8,14 @@ case class User(id: Long, token: String)
 
 object UserModel extends AppDatabase {
   def findByToken(token: String): Option[User] = {
-    val result  = for {
-      user <- Users() if user.token === token
-    } yield user
-
-    result.list match {
+    Users().filter(_.token === token).list match {
       case List(user) => Some(user)
       case _          => None
     }
   }
 
   def findOrCreate(id: Long) = {
-    val result = for { 
-      user <- Users() if user.id === id 
-    } yield user.token
-
-    result.list match {
+    Users().filter(_.id === id).list match {
       case List(token) => token
       case _           => create(id)
     }

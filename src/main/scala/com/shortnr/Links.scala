@@ -11,19 +11,16 @@ case class Link(url: String, code: String, folderId: Option[Long], userId: Long)
 
 object LinkModel extends AppDatabase {
   def create(user: User, url: String, code: Option[String], folderId: Option[Long]): Link = {
-    (Links() returning Links()) += Link(url, generateCode(), folderId, user.id)
+    (Links() returning Links()) += 
+      Link(url, generateCode(), folderId, user.id)
   }
 
-  def list(user: User): List[Link] = {
+  def forUser(user: User): List[Link] = {
     Links().filter(_.userId === user.id).list
   }
 
   def findByCode(code: String): Option[Link] = {
-    val link = for {
-      l <- Links() if l.code === code
-    } yield l
-
-    link.list match {
+    Links().filter(_.code === code).list match {
       case List(link) => Some(link)
       case _          => None
     }
@@ -32,20 +29,21 @@ object LinkModel extends AppDatabase {
   def getOrGenerateCode(code: Option[String]): String = {
     code match {
       case Some(code) => code
-      case None       => generateCode()
+      case None       => generateUniqueCode()
     }
   }
 
-  @tailrec
   def generateCode(): String = {
-    val code = (new Random).alphanumeric.take(8).map(_.toLower).mkString
-    val link = for {
-      l <- Links() if l.code === code
-    } yield l
+    (new Random).alphanumeric.take(8).map(_.toLower).mkString
+  }
 
-    link.length.run match {
+  @tailrec
+  def generateUniqueCode(): String = {
+    val code = generateCode()
+
+    Links().filter(_.code === code).length.run match {
       case 0 => code
-      case _ => generateCode()
+      case _ => generateUniqueCode()
     }
   }
 }

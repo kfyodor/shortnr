@@ -35,11 +35,13 @@ trait ShortnrService extends HttpService {
       get {
         parameters('user_id, 'secret) { (userId, secret) =>
           // We don't have predefined users so secret is just a stub.
-          complete(UserModel.findOrCreate(userId.toLong))
+          complete {
+            UserModel.findOrCreate(userId.toLong).toString
+          }
         }
       }
     } ~
-    parameter('token) { token =>
+    anyParams('token) { token =>
       authenticate(validate(token)) { currentUser =>
         pathPrefix("link") {
           path(Segment) { code: String =>
@@ -58,7 +60,7 @@ trait ShortnrService extends HttpService {
           } ~ pathEnd {
             get {
               complete {
-                LinkModel.list(currentUser).toString
+                LinkModel.forUser(currentUser).toString
               }
             } ~
             post {
@@ -71,13 +73,24 @@ trait ShortnrService extends HttpService {
           }
         } ~
         pathPrefix("folder") {
-          path(IntNumber) { id: Int =>
+          path(LongNumber) { id: Long =>
             get {
-              complete(s"folder/$id")
+              complete {
+                FolderModel.linksFor(id).toString
+              }
             }
           } ~ pathEnd {
+            post {
+              formFields('name) { name =>
+                complete {
+                  FolderModel.createByName(name, currentUser.id).toString
+                }
+              }
+            } ~
             get {
-              complete("folder")
+              complete {
+                FolderModel.listForUser(currentUser.id).toString
+              }
             }
           }
         }
