@@ -1,7 +1,10 @@
 package com.shortnr.tables
 
 import scala.slick.driver.PostgresDriver.simple._
-import com.shortnr.{ AppDatabase, Helper }
+
+import com.shortnr.AppDatabase
+import com.shortnr.helpers._
+import com.shortnr.auth.UserAuthorizationChecks
 
 import com.roundeights.hasher.Hasher
 
@@ -10,24 +13,28 @@ case class User(
   token:  String, 
   salt:   String, 
   secret: String
-)
+) extends UserAuthorizationChecks
 case class UserToken(token: String)
 
 object UserModel extends AppDatabase {
   implicit def stringToToken(token: String): UserToken = UserToken(token)
 
+  val users = Users()
+
   def findByToken(token: String): Option[User] =
-    Users().filter(_.token === token).firstOption
+    users.filter(_.token === token).firstOption
 
   def findById(id: Long): Option[User] =
-    Users().filter(_.id === id).firstOption
+    users.filter(_.id === id).firstOption
 
   def create(id: Long, secret: String): User = {
     val (salt, secureSecret) = hashSecret(secret)
     
-    (Users() returning Users()) += 
+    (users returning users) += 
       User(id, createToken, salt, secureSecret)
   }
+
+  private def createToken = Helper.generateToken
 
   def authenticateOrCreate(id: Long, secret: String): UserToken =
     authenticate(id, secret) { (id, secret) => 
@@ -39,8 +46,6 @@ object UserModel extends AppDatabase {
       case Some(user) => Some(user).filter(checkSecret(secret) _)
       case None       => notAuthenticated(id, secret) // Creating user here is just for demo purposes.
     }
-
-  private def createToken = Helper.generateToken
 
   private def hashSecret(secret: String): (String, String) = {
     val salt         = Helper.generateRandomString(16)

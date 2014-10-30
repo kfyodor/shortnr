@@ -43,32 +43,40 @@ trait ShortnrService extends HttpService {
         }
       }
     } ~
+    path("link" / Segment) { code =>
+      post {
+        formFields('referer, 'remote_ip) { (referer, remoteIp) =>
+          complete {
+            LinkModel.click(code, referer, remoteIp)
+          }
+        }
+      }
+    } ~
     anyParams('token) { token =>
       authenticate(validate(token)) { currentUser =>
         pathPrefix("link") {
           path(Segment) { code: String =>
             get {
-              complete {
-                LinkModel.findByCodeWithClicks(code)
-              }
-            } ~
-            post {
-              formFields('referer, 'remote_ip) { (referer, remoteIp) =>
-                complete {
-                  LinkModel.click(code, referer, remoteIp)
-                }
+              val link = LinkModel.findByCodeWithClicks(code)
+
+              authorize(currentUser.hasAccessToLink(link)) {
+                complete(link)
               }
             }
           } ~ pathEnd {
             get {
-              complete {
-                LinkModel.forUser(currentUser)
+              parameters('offset.as[Int].?, 'limit.as[Int].?) { (offset, limit) =>
+                complete {
+                  LinkModel.forUser(currentUser, offset, limit)
+                }
               }
             } ~
             post {
               formFields('url, 'code.?, 'folder_id.as[Long].?) { (url, code, folderId) =>
-                complete {
-                  LinkModel.create(currentUser, url, code, folderId)
+                authorize(currentUser.hasAccessToFolder(folderId)) {
+                  complete {
+                    LinkModel.create(currentUser, url, code, folderId)
+                  }
                 }
               }
             }
@@ -77,8 +85,10 @@ trait ShortnrService extends HttpService {
         pathPrefix("folder") {
           path(LongNumber) { id: Long =>
             get {
-              complete {
-                FolderModel.linksFor(id)
+              parameters('offset.as[Int].?, 'limit.as[Int].?) { (offset, limit) =>
+                complete {
+                  FolderModel.linksFor(id, offset, limit)
+                }
               }
             }
           } ~ pathEnd {
@@ -90,8 +100,10 @@ trait ShortnrService extends HttpService {
               }
             } ~
             get {
-              complete {
-                FolderModel.listForUser(currentUser.id)
+              parameters('offset.as[Int].?, 'limit.as[Int].?) { (offset, limit) =>
+                complete {
+                  FolderModel.listForUser(currentUser.id, offset, limit)
+                }
               }
             }
           }

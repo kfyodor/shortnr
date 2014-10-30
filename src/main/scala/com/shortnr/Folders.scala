@@ -3,26 +3,29 @@ package com.shortnr.tables
 import scala.slick.driver.PostgresDriver.simple._
 
 import com.shortnr.AppDatabase
+import com.shortnr.helpers.Pagination
 import com.shortnr.tables._
 
 case class Folder(id: Long, userId: Long, title: String)
 
-object FolderModel extends AppDatabase {
+object FolderModel extends AppDatabase with Pagination {
+  val folders = Folders()
+
   def find(id: Long): Option[Folder] = {
-    Folders().filter(_.id === id).list match {
+    folders.filter(_.id === id).list match {
       case List(folder) => Some(folder)
       case _            => None
     }
   }
 
-  def linksFor(id: Long): List[Link] =
-    Links().filter(_.folderId === id).list
+  def linksFor(id: Long, offset: Option[Int], limit: Option[Int]): List[Link] =
+    Links().filter(_.folderId === id).page(limit, offset).list
 
-  def listForUser(userId: Long): List[Folder] =
-    Folders().filter(_.userId === userId).list
+  def listForUser(userId: Long, offset: Option[Int], limit: Option[Int]): List[Folder] =
+    folders.filter(_.userId === userId).page(limit, offset).list
 
   def create(name: String, userId: Long): Folder =
-    (Folders() returning Folders()) += Folder(0, userId, name)
+    (folders returning folders) += Folder(0, userId, name)
 }
 
 class Folders(tag: Tag) extends Table[Folder](tag, "folders") {
@@ -33,7 +36,7 @@ class Folders(tag: Tag) extends Table[Folder](tag, "folders") {
   def user    = foreignKey("user_fk", userId, Users())(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
   
   def userIdx = index("user_id_idx", userId)
-  def nameIdx = index("name_idx", title, unique = true)
+  def nameIdx = index("name_idx", (title, userId), unique = true)
 
   def * = (id, userId, title) <> (Folder.tupled, Folder.unapply _)
 }

@@ -3,8 +3,9 @@ package com.shortnr.tables
 import scala.annotation.tailrec
 import scala.slick.driver.PostgresDriver.simple._
 
-import com.shortnr.{ AppDatabase, Helper }
+import com.shortnr.AppDatabase
 import com.shortnr.tables._
+import com.shortnr.helpers._
 
 case class LinkUrl(url: String)
 
@@ -24,10 +25,13 @@ case class LinkWithClicks(
   userId:   Long, 
   clicks:   Int)
 
-object LinkModel extends AppDatabase {
-  def create(user: User, url: String, code: Option[String], folderId: Option[Long]): Link =
-    (Links() returning Links()) += 
+object LinkModel extends AppDatabase with Pagination {
+  val links = Links()
+
+  def create(user: User, url: String, code: Option[String], folderId: Option[Long]): Link = {
+    (links returning links) += 
       Link(0, url, generateCode, folderId, user.id)
+  }
 
   def click(code: String, remoteIp: String, referer: String): Option[LinkUrl] = {
     findByCode(code).map { link => 
@@ -36,15 +40,18 @@ object LinkModel extends AppDatabase {
     }
   }
 
-  def forUser(user: User): List[Link] =
-    Links().filter(_.userId === user.id).list
+  def forUser(user: User, offset: Option[Int], limit: Option[Int]): List[Link] = {
+    links.filter(_.userId === user.id).page(limit, offset).list
+  }
+
+    
 
   def findByCode(code: String): Option[Link] =
-    Links().filter(_.code === code).firstOption
+    links.filter(_.code === code).firstOption
 
   def findByCodeWithClicks(code: String): Option[LinkWithClicks] = {
     val linksWithClicks = for { 
-      (l, c) <- Links() leftJoin Clicks() on (_.id === _.linkId)
+      (l, c) <- links leftJoin ClickModel.clicks on (_.id === _.linkId)
       if l.code === code
     } yield (l, c)
 
@@ -53,7 +60,7 @@ object LinkModel extends AppDatabase {
       .map { case (l, c) => (l, c.length) }
 
     val linksWithCounters = for {
-      (l, counts) <- Links() join linkIdsWithCounters on (_.id === _._1)
+      (l, counts) <- links join linkIdsWithCounters on (_.id === _._1)
     } yield (l, counts)
 
     linksWithCounters.run match {
@@ -64,10 +71,11 @@ object LinkModel extends AppDatabase {
     }
   }
 
-  def getOrGenerateCode(code: Option[String]): String =
+  private def getOrGenerateCode(code: Option[String]): String =
     code getOrElse generateUniqueCode
 
-  private def generateCode: String = Helper.generateRandomString(8)
+  private def generateCode: String = 
+    Helper.generateRandomString(8)
 
   @tailrec
   private def generateUniqueCode: String = {
