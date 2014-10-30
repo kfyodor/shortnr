@@ -1,24 +1,26 @@
 package com.shortnr.tables
 
 import scala.slick.driver.PostgresDriver.simple._
+
 import com.shortnr.AppDatabase
+import com.shortnr.serialization._
+
 import java.util.UUID
 
 case class User(id: Long, token: String)
+case class UserToken(token: String)
 
 object UserModel extends AppDatabase {
+  implicit def stringToToken(token: String): UserToken = UserToken(token)
+
   def findByToken(token: String): Option[User] = {
-    Users().filter(_.token === token).list match {
-      case List(user) => Some(user)
-      case _          => None
-    }
+    Users().filter(_.token === token).firstOption
   }
 
-  def findOrCreate(id: Long) = {
-    Users().filter(_.id === id).list match {
-      case List(token) => token
-      case _           => create(id)
-    }
+  def findOrCreate(id: Long): UserToken = {
+    UserToken(
+      Users().filter(_.id === id).map(_.token).firstOption.getOrElse(create(id))
+    )
   }
 
   def create(id: Long) = {

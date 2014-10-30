@@ -3,7 +3,9 @@ package com.shortnr
 import scala.slick.driver.PostgresDriver
 import scala.slick.driver.PostgresDriver.simple._
 
-import scala.slick.jdbc.meta.MTable
+import scala.slick.jdbc.{GetResult, StaticQuery => Q}
+
+// import scala.slick.jdbc.meta.MTable
 
 import com.shortnr.{ Config => C }
 import com.shortnr.tables._
@@ -18,18 +20,19 @@ trait AppDatabase {
 
   implicit val session: Session = db.createSession()
 
+  val ddl = Seq(Users(), Folders(), Links(), Clicks()).map(_.ddl).reduce(_ ++ _)
+
   def startDB() = {
-    // val ddls = Seq(Users(), Folders(), Links()).map(_.ddl)
+    
+    println("!!! DEBUG")
 
-    // println("!!! DEBUG")
 
-    // ddls.foreach { ddl =>
-    //   println(ddl.createStatements.mkString("\n"))
-    //   println(ddl.dropStatements.mkString("\n"))
-    //   ddl.drop
-    //   ddl.create
-    // }
-
+    // dropTables
+    createTables
     println("----------")
   }
+
+  def dropTables   = ddl.drop
+  def createTables = ddl.create
+
 }

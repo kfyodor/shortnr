@@ -8,7 +8,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import spray.routing._
 import spray.routing.directives.AuthMagnet
 import spray.routing.authentication._
+
 import spray.http._
+
+import spray.httpx.SprayJsonSupport._
 
 import com.shortnr.tables._
 
@@ -36,7 +39,7 @@ trait ShortnrService extends HttpService {
         parameters('user_id, 'secret) { (userId, secret) =>
           // We don't have predefined users so secret is just a stub.
           complete {
-            UserModel.findOrCreate(userId.toLong).toString
+            UserModel.findOrCreate(userId.toLong)
           }
         }
       }
@@ -47,26 +50,26 @@ trait ShortnrService extends HttpService {
           path(Segment) { code: String =>
             get {
               complete {
-                LinkModel.findByCode(code).toString
+                LinkModel.findByCode(code)
               }
             } ~
             post {
-              formFields('url, 'folder_id.as[Long].?) { (url, folderId) =>
+              formFields('referer, 'remote_ip) { (referer, remoteIp) =>
                 complete {
-                  LinkModel.create(currentUser, url, Some(code), folderId).toString
+                  LinkModel.findByCode(code).map { l => l.doClick(referer, remoteIp) }
                 }
               }
             }
           } ~ pathEnd {
             get {
               complete {
-                LinkModel.forUser(currentUser).toString
+                LinkModel.forUser(currentUser)
               }
             } ~
             post {
               formFields('url, 'code.?, 'folder_id.as[Long].?) { (url, code, folderId) =>
                 complete {
-                  LinkModel.create(currentUser, url, code, folderId).toString
+                  LinkModel.create(currentUser, url, code, folderId)
                 }
               }
             }
@@ -76,20 +79,20 @@ trait ShortnrService extends HttpService {
           path(LongNumber) { id: Long =>
             get {
               complete {
-                FolderModel.linksFor(id).toString
+                FolderModel.linksFor(id)
               }
             }
           } ~ pathEnd {
             post {
               formFields('name) { name =>
                 complete {
-                  FolderModel.createByName(name, currentUser.id).toString
+                  FolderModel.createByName(name, currentUser.id)
                 }
               }
             } ~
             get {
               complete {
-                FolderModel.listForUser(currentUser.id).toString
+                FolderModel.listForUser(currentUser.id)
               }
             }
           }

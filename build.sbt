@@ -12,12 +12,14 @@ libraryDependencies ++= {
   Seq(
     "io.spray"            %%  "spray-can"     % sprayV,
     "io.spray"            %%  "spray-routing" % sprayV,
+    "io.spray"            %%  "spray-json"    % "1.3.1",
     "io.spray"            %%  "spray-testkit" % sprayV  % "test",
     "com.typesafe.akka"   %%  "akka-actor"    % akkaV,
     "com.typesafe.akka"   %%  "akka-testkit"  % akkaV   % "test",
     "com.typesafe.slick"  %%  "slick"         % "2.1.0",
     "org.specs2"          %%  "specs2-core"   % "2.3.11" % "test",
-    "org.postgresql"      % "postgresql"      % "9.3-1100-jdbc4"
+    "org.postgresql"      % "postgresql"      % "9.3-1100-jdbc4",
+    "ch.qos.logback"      % "logback-classic" % "1.0.12"
   )
 }
 
