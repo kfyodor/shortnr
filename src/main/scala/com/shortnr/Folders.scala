@@ -15,25 +15,22 @@ object FolderModel extends AppDatabase {
     }
   }
 
-  def linksFor(id: Long): List[Link] = {
+  def linksFor(id: Long): List[Link] =
     Links().filter(_.folderId === id).list
-  }
 
-  def listForUser(userId: Long): List[Folder] = {
+  def listForUser(userId: Long): List[Folder] =
     Folders().filter(_.userId === userId).list
-  }
 
-  def createByName(name: String, userId: Long): Folder = {
+  def create(name: String, userId: Long): Folder =
     (Folders() returning Folders()) += Folder(0, userId, name)
-  }
 }
 
 class Folders(tag: Tag) extends Table[Folder](tag, "folders") {
-  def id     = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def userId = column[Long]("user_id")
-  def title  = column[String]("title")
+  def id      = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def userId  = column[Long]("user_id")
+  def title   = column[String]("title")
 
-  def user   = foreignKey("user_fk", userId, Users())(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+  def user    = foreignKey("user_fk", userId, Users())(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
   
   def userIdx = index("user_id_idx", userId)
   def nameIdx = index("name_idx", title, unique = true)

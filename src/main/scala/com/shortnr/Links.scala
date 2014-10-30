@@ -13,35 +13,59 @@ case class Link(id: Long, url: String, code: String, folderId: Option[Long], use
   }
 }
 
+case class LinkWithClicks(
+  id:       Long, 
+  url:      String, 
+  code:     String, 
+  folderId: Option[Long], 
+  userId:   Long, 
+  clicks:   Int)
+
 object LinkModel extends AppDatabase {
-  def create(user: User, url: String, code: Option[String], folderId: Option[Long]): Link = {
+  def create(user: User, url: String, code: Option[String], folderId: Option[Long]): Link =
     (Links() returning Links()) += 
-      Link(0, url, generateCode(), folderId, user.id)
-  }
+      Link(0, url, generateCode, folderId, user.id)
 
-  def forUser(user: User): List[Link] = {
+  def forUser(user: User): List[Link] =
     Links().filter(_.userId === user.id).list
-  }
 
-  def findByCode(code: String): Option[Link] = {
+  def findByCode(code: String): Option[Link] =
     Links().filter(_.code === code).firstOption
+
+  def findByCodeWithClicks(code: String): Option[LinkWithClicks] = {
+    val linksWithClicks = for { 
+      (l, c) <- Links() leftJoin Clicks() on (_.id === _.linkId)
+      if l.code === code
+    } yield (l, c)
+
+    val linkIdsWithCounters = linksWithClicks
+      .groupBy(_._2.linkId)
+      .map { case (l, c) => (l, c.length) }
+
+    val linksWithCounters = for {
+      (l, counts) <- Links() join linkIdsWithCounters on (_.id === _._1)
+    } yield (l, counts)
+
+    linksWithCounters.run match {
+      case Vector((l, (_, c))) => {
+        Some(LinkWithClicks(l.id, l.url, l.code, l.folderId, l.userId, c))
+      }
+      case Vector() => None
+    }
   }
 
-  def getOrGenerateCode(code: Option[String]): String = {
-    code getOrElse generateUniqueCode()
-  }
+  def getOrGenerateCode(code: Option[String]): String =
+    code getOrElse generateUniqueCode
 
-  def generateCode(): String = {
-    Helper.generateRandomString(8)
-  }
+  private def generateCode: String = Helper.generateRandomString(8)
 
   @tailrec
-  def generateUniqueCode(): String = {
-    val code = generateCode()
+  private def generateUniqueCode: String = {
+    val code = generateCode
 
     Links().filter(_.code === code).length.run match {
       case 0 => code
-      case _ => generateUniqueCode()
+      case _ => generateUniqueCode
     }
   }
 }

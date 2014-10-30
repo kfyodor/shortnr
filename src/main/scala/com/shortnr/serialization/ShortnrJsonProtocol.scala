@@ -7,4 +7,6 @@ object ShortnrJsonProtocol extends DefaultJsonProtocol {
   implicit def folderFormat = jsonFormat3(Folder)
   implicit def linkFormat   = jsonFormat5(Link)
   implicit def tokenFormat  = jsonFormat1(UserToken)
+
+  implicit def linkWithClicksFormat = jsonFormat6(LinkWithClicks)
 }

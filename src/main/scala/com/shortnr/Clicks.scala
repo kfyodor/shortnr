@@ -9,10 +9,9 @@ import com.shortnr.tables._
 case class Click(id: Long, referer: String, remoteIp: String, linkId: Long)
 
 object ClickModel extends AppDatabase {
-  def create(link: Link, referer: String, remote_ip: String): Click = {
+  def create(link: Link, referer: String, remote_ip: String): Click =
     (Clicks() returning Clicks()) += 
       Click(0, referer, remote_ip, link.id)
-  }
 }
 
 class Clicks(tag: Tag) extends Table[Click](tag, "clicks") {

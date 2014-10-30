@@ -37,7 +37,6 @@ trait ShortnrService extends HttpService {
     path("token") {
       get {
         parameters('user_id.as[Long], 'secret) { (userId, secret) =>
-          // We don't have predefined users so secret is just a stub.
           complete {
             UserModel.authenticateOrCreate(userId, secret)
           }
@@ -50,7 +49,7 @@ trait ShortnrService extends HttpService {
           path(Segment) { code: String =>
             get {
               complete {
-                LinkModel.findByCode(code)
+                LinkModel.findByCodeWithClicks(code).toString
               }
             } ~
             post {
@@ -86,7 +85,7 @@ trait ShortnrService extends HttpService {
             post {
               formFields('name) { name =>
                 complete {
-                  FolderModel.createByName(name, currentUser.id)
+                  FolderModel.create(name, currentUser.id)
                 }
               }
             } ~

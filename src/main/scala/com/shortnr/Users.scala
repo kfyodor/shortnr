@@ -5,22 +5,22 @@ import com.shortnr.{ AppDatabase, Helper }
 
 import com.roundeights.hasher.Hasher
 
-case class User(id: Long, token: String, salt: String, secret: String)
-
+case class User(
+  id:     Long, 
+  token:  String, 
+  salt:   String, 
+  secret: String
+)
 case class UserToken(token: String)
 
 object UserModel extends AppDatabase {
   implicit def stringToToken(token: String): UserToken = UserToken(token)
 
-  def findByToken(token: String): Option[User] = {
+  def findByToken(token: String): Option[User] =
     Users().filter(_.token === token).firstOption
-  }
 
-  def findByIdWithPassword(id: Long): Option[User] = {
+  def findById(id: Long): Option[User] =
     Users().filter(_.id === id).firstOption
-  }
-
-  def findById(id: Long): Option[User] = findByIdWithPassword(id)
 
   def create(id: Long, secret: String): User = {
     val (salt, secureSecret) = hashSecret(secret)
@@ -30,16 +30,15 @@ object UserModel extends AppDatabase {
   }
 
   def authenticateOrCreate(id: Long, secret: String): UserToken =
-    authenticate(id, secret) { (id, secret) => Some(create(id, secret)) }.map(_.token).get
+    authenticate(id, secret) { (id, secret) => 
+      Some(create(id, secret)) 
+    }.map(_.token).get
 
-  def authenticate(id: Long, secret: String)(notAuthenticated: (Long, String) => Option[User]): Option[User] = {
-    val secretChecker = checkSecret(secret) _
-
-    findByIdWithPassword(id) match {
-      case Some(user) => Some(user).filter(secretChecker)
+  def authenticate(id: Long, secret: String)(notAuthenticated: (Long, String) => Option[User]): Option[User] =
+    findById(id) match {
+      case Some(user) => Some(user).filter(checkSecret(secret) _)
       case None       => notAuthenticated(id, secret) // Creating user here is just for demo purposes.
     }
-  }
 
   private def createToken = Helper.generateToken
 
@@ -50,9 +49,8 @@ object UserModel extends AppDatabase {
     (salt, secureSecret)
   }
 
-  private def checkSecret(secret: String)(user: User): Boolean = {
+  private def checkSecret(secret: String)(user: User): Boolean =
     (Hasher(secret).salt(user.salt).bcrypt.hash= user.secret)
-  }
 }
 
 
