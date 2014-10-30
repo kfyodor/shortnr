@@ -6,12 +6,15 @@ import scala.slick.driver.PostgresDriver.simple._
 import com.shortnr.{ AppDatabase, Helper }
 import com.shortnr.tables._
 
-case class Link(id: Long, url: String, code: String, folderId: Option[Long], userId: Long) {
-  def doClick(referer: String, remoteIp: String): String = {
-    ClickModel.create(this, referer, remoteIp)
-    return url
-  }
-}
+case class LinkUrl(url: String)
+
+case class Link(
+  id:       Long,
+  url:      String,
+  code:     String,
+  folderId: Option[Long],
+  userId:   Long
+)
 
 case class LinkWithClicks(
   id:       Long, 
@@ -25,6 +28,13 @@ object LinkModel extends AppDatabase {
   def create(user: User, url: String, code: Option[String], folderId: Option[Long]): Link =
     (Links() returning Links()) += 
       Link(0, url, generateCode, folderId, user.id)
+
+  def click(code: String, remoteIp: String, referer: String): Option[LinkUrl] = {
+    findByCode(code).map { link => 
+      ClickModel.create(link, referer, remoteIp)
+      LinkUrl(link.url)
+    }
+  }
 
   def forUser(user: User): List[Link] =
     Links().filter(_.userId === user.id).list

@@ -49,13 +49,13 @@ trait ShortnrService extends HttpService {
           path(Segment) { code: String =>
             get {
               complete {
-                LinkModel.findByCodeWithClicks(code).toString
+                LinkModel.findByCodeWithClicks(code)
               }
             } ~
             post {
               formFields('referer, 'remote_ip) { (referer, remoteIp) =>
                 complete {
-                  LinkModel.findByCode(code).map { l => l.doClick(referer, remoteIp) }
+                  LinkModel.click(code, referer, remoteIp)
                 }
               }
             }
