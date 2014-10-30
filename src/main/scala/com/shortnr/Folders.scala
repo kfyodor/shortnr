@@ -3,7 +3,6 @@ package com.shortnr.tables
 import scala.slick.driver.PostgresDriver.simple._
 
 import com.shortnr.AppDatabase
-import com.shortnr.serialization._
 import com.shortnr.tables._
 
 case class Folder(id: Long, userId: Long, title: String)

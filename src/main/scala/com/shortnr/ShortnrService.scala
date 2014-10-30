@@ -10,10 +10,10 @@ import spray.routing.directives.AuthMagnet
 import spray.routing.authentication._
 
 import spray.http._
-
 import spray.httpx.SprayJsonSupport._
 
 import com.shortnr.tables._
+import com.shortnr.serialization.ShortnrJsonProtocol._
 
 
 class ShortnrServiceActor extends Actor with ShortnrService {
@@ -36,10 +36,10 @@ trait ShortnrService extends HttpService {
   val ShortnrRoute = {
     path("token") {
       get {
-        parameters('user_id, 'secret) { (userId, secret) =>
+        parameters('user_id.as[Long], 'secret) { (userId, secret) =>
           // We don't have predefined users so secret is just a stub.
           complete {
-            UserModel.findOrCreate(userId.toLong)
+            UserModel.findOrCreate(userId)
           }
         }
       }

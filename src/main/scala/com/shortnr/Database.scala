@@ -28,7 +28,7 @@ trait AppDatabase {
 
 
     // dropTables
-    createTables
+    // createTables
     println("----------")
   }
 

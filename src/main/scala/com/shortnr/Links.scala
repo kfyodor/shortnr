@@ -5,7 +5,6 @@ import scala.slick.driver.PostgresDriver.simple._
 import scala.util.Random
 
 import com.shortnr.AppDatabase
-import com.shortnr.serialization._
 import com.shortnr.tables._
 
 case class Link(id: Long, url: String, code: String, folderId: Option[Long], userId: Long) {
@@ -25,8 +24,8 @@ object LinkModel extends AppDatabase {
     Links().filter(_.userId === user.id).list
   }
 
-  def findByCode(code: String): Link = {
-    Links().filter(_.code === code).first
+  def findByCode(code: String): Option[Link] = {
+    Links().filter(_.code === code).firstOption
   }
 
   def getOrGenerateCode(code: Option[String]): String = {

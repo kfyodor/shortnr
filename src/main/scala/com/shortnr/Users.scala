@@ -3,7 +3,6 @@ package com.shortnr.tables
 import scala.slick.driver.PostgresDriver.simple._
 
 import com.shortnr.AppDatabase
-import com.shortnr.serialization._
 
 import java.util.UUID
 
@@ -18,8 +17,7 @@ object UserModel extends AppDatabase {
   }
 
   def findOrCreate(id: Long): UserToken = {
-    Users().filter(_.id === id).map(_.token).firstOption
-      .getOrElse(create(id))
+    Users().filter(_.id === id).map(_.token).firstOption.getOrElse(create(id)).toString
   }
 
   def create(id: Long) = {
