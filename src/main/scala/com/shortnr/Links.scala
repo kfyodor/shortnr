@@ -2,9 +2,8 @@ package com.shortnr.tables
 
 import scala.annotation.tailrec
 import scala.slick.driver.PostgresDriver.simple._
-import scala.util.Random
 
-import com.shortnr.AppDatabase
+import com.shortnr.{ AppDatabase, Helper }
 import com.shortnr.tables._
 
 case class Link(id: Long, url: String, code: String, folderId: Option[Long], userId: Long) {
@@ -33,7 +32,7 @@ object LinkModel extends AppDatabase {
   }
 
   def generateCode(): String = {
-    (new Random).alphanumeric.take(8).map(_.toLower).mkString
+    Helper.generateRandomString(8)
   }
 
   @tailrec

@@ -39,7 +39,7 @@ trait ShortnrService extends HttpService {
         parameters('user_id.as[Long], 'secret) { (userId, secret) =>
           // We don't have predefined users so secret is just a stub.
           complete {
-            UserModel.findOrCreate(userId)
+            UserModel.authenticateOrCreate(userId, secret)
           }
         }
       }
