@@ -18,9 +18,8 @@ object UserModel extends AppDatabase {
   }
 
   def findOrCreate(id: Long): UserToken = {
-    UserToken(
-      Users().filter(_.id === id).map(_.token).firstOption.getOrElse(create(id))
-    )
+    Users().filter(_.id === id).map(_.token).firstOption
+      .getOrElse(create(id))
   }
 
   def create(id: Long) = {
