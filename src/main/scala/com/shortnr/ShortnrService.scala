@@ -22,25 +22,7 @@ class ShortnrServiceActor extends Actor with ShortnrService {
   def receive = runRoute(ShortnrRoute)
 }
 
-class DatabaseActor extends Actor {
-  
-}
-
 trait ShortnrService extends HttpService {
-  implicit def fromFutureAuth[T](auth: ⇒ Future[Authentication[T]])(implicit executor: ExecutionContext): AuthMagnet[T] =
-    new AuthMagnet(onSuccess(auth))
-
-  def validate(token: String): Future[Authentication[User]] = {
-    lazy val r = UserModel.findByToken(token) match {
-      case Some(user) => Right(user)
-      case None       => Left(AuthenticationFailedRejection(AuthenticationFailedRejection.CredentialsMissing, List()))
-    }
-    Future(r)
-  }
-
-  // def futureAuthorize(check: => Future[Boolean]): Directive0 = 
-  //   onSuccess(check).flatMap(authorize(_))
-
   val ShortnrRoute = path("") { 
     get {
       respondWithMediaType(`text/html`) {
@@ -138,5 +120,16 @@ trait ShortnrService extends HttpService {
         }
       }
     }
+  }
+
+  implicit def fromFutureAuth[T](auth: ⇒ Future[Authentication[T]])(implicit executor: ExecutionContext): AuthMagnet[T] =
+    new AuthMagnet(onSuccess(auth))
+
+  def validate(token: String): Future[Authentication[User]] = {
+    lazy val r = UserModel.findByToken(token) match {
+      case Some(user) => Right(user)
+      case None       => Left(AuthenticationFailedRejection(AuthenticationFailedRejection.CredentialsMissing, List()))
+    }
+    Future(r)
   }
 }
