@@ -28,8 +28,7 @@ libraryDependencies ++= {
     "org.postgresql"      %   "postgresql"      % "9.3-1100-jdbc4",
     "ch.qos.logback"      %   "logback-classic" % "1.0.12",
     "com.roundeights"     %%  "hasher"          % "1.0.0",
-    "org.mindrot"         %   "jbcrypt"         % "0.3m",
-    "com.mchange" % "c3p0" % "0.9.2.1"
+    "org.mindrot"         %   "jbcrypt"         % "0.3m"
   )
 }
 

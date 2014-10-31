@@ -7,7 +7,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 
-object Boot extends App with AppDatabase {
+object Boot extends App {
   implicit val system = ActorSystem("shortnr")
   implicit val timeout = Timeout(5.seconds)
 

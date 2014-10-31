@@ -12,6 +12,7 @@ import spray.routing.authentication._
 import spray.http._
 import spray.http.MediaTypes._
 import spray.httpx.SprayJsonSupport._
+import spray.httpx.marshalling._
 
 import com.shortnr.tables._
 import com.shortnr.serialization.ShortnrJsonProtocol._

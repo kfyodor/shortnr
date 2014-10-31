@@ -1,22 +1,31 @@
 package com.shortnr
 
+import spray.json.DefaultJsonProtocol
+
+import com.shortnr.serialization.ShortnrJsonProtocol
+import ShortnrJsonProtocol._
+
 import spray.testkit.Specs2RouteTest
 
-import spray.http._
 import spray.util._
 import spray.json._
 
-import spray.httpx.SprayJsonSupport
+import spray.http._
+
+import HttpCharsets._
+import MediaTypes._
+import ContentTypes._
+
 import spray.httpx.SprayJsonSupport._
+import spray.httpx.unmarshalling._
+import spray.httpx.marshalling._
+import spray.util._
+
+import scala.slick.driver.PostgresDriver.simple._
 
 import org.specs2.mutable.{ Specification, Before, After }
-import StatusCodes._
-
-import com.shortnr.serialization.ShortnrJsonProtocol
-import com.shortnr.serialization.ShortnrJsonProtocol._
 
 import com.shortnr.tables._
-import scala.slick.driver.PostgresDriver.simple._
 import com.shortnr.tests._
 
 class RoutesSpec extends Specification with AppDatabase
@@ -55,7 +64,7 @@ class RoutesSpec extends Specification with AppDatabase
   "Shortnr API" should {
     "GET /" in {
       Get() ~> ShortnrRoute ~> check {
-        handled must beFalse
+        responseAs[String] === "<h1>Link shortener API</h1>"
       }
     }
 
@@ -72,15 +81,15 @@ class RoutesSpec extends Specification with AppDatabase
     }
 
     "GET /link/:code" in {
-      Get("/link/code1", Map("token" -> token)) ~> sealRoute(ShortnrRoute) ~> check {
+      Get(s"/link/code1?token=${token}") ~> sealRoute(ShortnrRoute) ~> check {
 
         responseAs[LinkWithClicks] === LinkWithClicks(1, "http://google.com", "code1", None, 1, 1)
       }
     }
 
     "GET /link" in {
-      Get("/link", Map("token" -> token)) ~> sealRoute(ShortnrRoute) ~> check {
-        responseAs[List[Link]].map(_.id) === List(1,2,3).map(_.toLong)
+      Get(s"/link?token=${token}") ~> sealRoute(ShortnrRoute) ~> check {
+        responseAs[List[Link]].map(_.id) === Links().filter(_.userId === 1.toLong).map(_.id).list
       }
     }
 
@@ -110,16 +119,16 @@ class RoutesSpec extends Specification with AppDatabase
     }
 
     "GET /folder" in {
-      Get("/folder", Map("token" -> token)) ~> sealRoute(ShortnrRoute) ~> check {
-        responseAs[List[Folder]].map(_.id) === List(1, 2).map(_.toLong)
+      Get(s"/folder?token=${token}") ~> sealRoute(ShortnrRoute) ~> check {
+        responseAs[List[Folder]].map(_.id) === Folders().filter(_.userId === 1.toLong).map(_.id).list
       }
 
-      Get("/folder", Map("token" -> token, "limit" -> "1")) ~> sealRoute(ShortnrRoute) ~> check {
-        responseAs[List[Folder]].map(_.id) === List(1).map(_.toLong)
+      Get(s"/folder?token=${token}&limit=1") ~> sealRoute(ShortnrRoute) ~> check {
+        responseAs[List[Folder]].map(_.id) === Folders().filter(_.userId === 1.toLong).map(_.id).take(1).list
       }
 
-      Get("/folder", Map("token" -> token, "limit" -> "1", "offset" -> "1")) ~> sealRoute(ShortnrRoute) ~> check {
-        responseAs[List[Folder]].map(_.id) === List(2).map(_.toLong)
+      Get(s"/folder?token=${token}&limit=1&offset=1") ~> sealRoute(ShortnrRoute) ~> check {
+        responseAs[List[Folder]].map(_.id) === Folders().filter(_.userId === 1.toLong).map(_.id).take(1).drop(1).list
       }
     }
 
@@ -130,8 +139,8 @@ class RoutesSpec extends Specification with AppDatabase
     }
 
     "GET /folder/:id" in {
-      Get("folder/1", Map("token" -> token)) ~> sealRoute(ShortnrRoute) ~> check {
-        responseAs[List[Link]].map(_.id) === List(2,3).map(_.toLong)
+      Get(s"/folder/1?token=${token}") ~> sealRoute(ShortnrRoute) ~> check {
+        responseAs[List[Link]].map(_.id) === Links().filter(_.folderId === 1.toLong).map(_.id).list
       }
     }
   }
