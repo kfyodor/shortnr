@@ -22,7 +22,6 @@ class ShortnrServiceActor extends Actor with ShortnrService {
 }
 
 trait ShortnrService extends HttpService {
-
   implicit def fromFutureAuth[T](auth: ⇒ Future[Authentication[T]])(implicit executor: ExecutionContext): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
 
@@ -33,37 +32,44 @@ trait ShortnrService extends HttpService {
     }
   }
 
-  val ShortnrRoute = {
+  val ShortnrRoute = tokenRoutes ~ linkRoutes ~ folderRoutes
+
+  def tokenRoutes = {
     path("token") {
-      get {
-        parameters('user_id.as[Long], 'secret) { (userId, secret) =>
+      post {
+        formFields('user_id.as[Long], 'secret) { (userId, secret) =>
           complete {
             UserModel.authenticateOrCreate(userId, secret)
           }
         }
       }
-    } ~
-    path("link" / Segment) { code =>
-      post {
-        formFields('referer, 'remote_ip) { (referer, remoteIp) =>
-          complete {
-            LinkModel.click(code, referer, remoteIp)
-          }
-        }
-      }
-    } ~
-    anyParams('token) { token =>
-      authenticate(validate(token)) { currentUser =>
-        pathPrefix("link") {
-          path(Segment) { code: String =>
+    }
+  }
+
+  def linkRoutes = {
+    pathPrefix("link") {
+      path(Segment) { code: String =>
+        anyParams('token) { token =>
+          authenticate(validate(token)) { currentUser =>
             get {
               val link = LinkModel.findByCodeWithClicks(code)
 
               authorize(currentUser.hasAccessToLink(link)) {
-                complete(link)
+                complete { link }
               }
             }
-          } ~ pathEnd {
+          }
+        } ~
+        post {
+          formFields('referer, 'remote_ip) { (referer, remoteIp) =>
+            complete {
+              LinkModel.click(code, referer, remoteIp)
+            }
+          }
+        }
+      } ~ pathEnd {
+        anyParams('token) { token => 
+          authenticate(validate(token)) { currentUser =>
             get {
               parameters('offset.as[Int].?, 'limit.as[Int].?) { (offset, limit) =>
                 complete {
@@ -81,7 +87,14 @@ trait ShortnrService extends HttpService {
               }
             }
           }
-        } ~
+        }
+      }
+    }
+  }
+
+  def folderRoutes = {
+    anyParams('token) { token =>
+      authenticate(validate(token)) { currentUser =>
         pathPrefix("folder") {
           path(LongNumber) { id: Long =>
             get {

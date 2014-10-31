@@ -14,6 +14,7 @@ case class User(
   salt:   String, 
   secret: String
 ) extends UserAuthorizationChecks
+
 case class UserToken(token: String)
 
 object UserModel extends AppDatabase {
@@ -36,10 +37,11 @@ object UserModel extends AppDatabase {
 
   private def createToken = Helper.generateToken
 
-  def authenticateOrCreate(id: Long, secret: String): UserToken =
+  def authenticateOrCreate(id: Long, secret: String): UserToken = {
     authenticate(id, secret) { (id, secret) => 
       Some(create(id, secret)) 
-    }.map(_.token).get
+    }.map(_.token).get 
+  }
 
   def authenticate(id: Long, secret: String)(notAuthenticated: (Long, String) => Option[User]): Option[User] =
     findById(id) match {

@@ -30,22 +30,18 @@ object LinkModel extends AppDatabase with Pagination {
 
   def create(user: User, url: String, code: Option[String], folderId: Option[Long]): Link = {
     (links returning links) += 
-      Link(0, url, generateCode, folderId, user.id)
+      Link(0, url, getOrGenerateCode(code), folderId, user.id)
   }
 
-  def click(code: String, remoteIp: String, referer: String): Option[LinkUrl] = {
+  def click(code: String, remoteIp: String, referer: String): Option[LinkUrl] =
     findByCode(code).map { link => 
       ClickModel.create(link, referer, remoteIp)
       LinkUrl(link.url)
     }
-  }
 
-  def forUser(user: User, offset: Option[Int], limit: Option[Int]): List[Link] = {
+  def forUser(user: User, offset: Option[Int], limit: Option[Int]): List[Link] =
     links.filter(_.userId === user.id).page(limit, offset).list
-  }
-
-    
-
+  
   def findByCode(code: String): Option[Link] =
     links.filter(_.code === code).firstOption
 

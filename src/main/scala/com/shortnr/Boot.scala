@@ -13,7 +13,5 @@ object Boot extends App with AppDatabase {
 
   val service = system.actorOf(Props[ShortnrServiceActor], "shortnr-service")
 
-  startDB()
-
   IO(Http) ? Http.Bind(service, interface = "localhost", port = 8080)
 }
