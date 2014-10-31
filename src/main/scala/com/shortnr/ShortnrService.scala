@@ -10,6 +10,7 @@ import spray.routing.directives.AuthMagnet
 import spray.routing.authentication._
 
 import spray.http._
+import spray.http.MediaTypes._
 import spray.httpx.SprayJsonSupport._
 
 import com.shortnr.tables._
@@ -21,18 +22,32 @@ class ShortnrServiceActor extends Actor with ShortnrService {
   def receive = runRoute(ShortnrRoute)
 }
 
+class DatabaseActor extends Actor {
+  
+}
+
 trait ShortnrService extends HttpService {
   implicit def fromFutureAuth[T](auth: ⇒ Future[Authentication[T]])(implicit executor: ExecutionContext): AuthMagnet[T] =
     new AuthMagnet(onSuccess(auth))
 
   def validate(token: String): Future[Authentication[User]] = {
-    UserModel.findByToken(token) match {
-      case Some(user) => Future(Right(user))
-      case None       => Future(Left(AuthenticationFailedRejection(AuthenticationFailedRejection.CredentialsMissing, List())))
+    lazy val r = UserModel.findByToken(token) match {
+      case Some(user) => Right(user)
+      case None       => Left(AuthenticationFailedRejection(AuthenticationFailedRejection.CredentialsMissing, List()))
     }
+    Future(r)
   }
 
-  val ShortnrRoute = tokenRoutes ~ linkRoutes ~ folderRoutes
+  // def futureAuthorize(check: => Future[Boolean]): Directive0 = 
+  //   onSuccess(check).flatMap(authorize(_))
+
+  val ShortnrRoute = path("") { 
+    get {
+      respondWithMediaType(`text/html`) {
+        { complete("<h1>Link shortener API</h1>") } 
+      }
+    }
+  } ~ tokenRoutes ~ linkRoutes ~ folderRoutes
 
   def tokenRoutes = {
     path("token") {
